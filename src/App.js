@@ -75,7 +75,10 @@ class Filter extends Component {
     return (
       <div>
         <img />
-        <input typle="text" />
+        <input
+          typle="text"
+          onKeyUp={event => this.props.onTextChange(event.target.value)}
+        />
         Filter
       </div>
     );
@@ -87,13 +90,8 @@ class Playlist extends Component {
     return (
       <div style={{ width: "30%", display: "inline-block" }}>
         <img />
-        <h3>Playlist Names</h3>
-        <ul>
-          <li>Song 1</li>
-          <li>Song 2</li>
-          <li>Song 3</li>
-          <li>Song 4</li>
-        </ul>
+        <h3>{this.props.playlist.name}</h3>
+        <ul>{this.props.playlist.songs.map(song => <li>{song.name}</li>)}</ul>
       </div>
     );
   }
@@ -102,16 +100,31 @@ class Playlist extends Component {
 class App extends Component {
   constructor() {
     super();
-    this.state = { serverData: {} };
+    this.state = {
+      serverData: {},
+      filterString: ""
+    };
   }
 
   componentDidMount() {
     setTimeout(() => {
       this.setState({ serverData: fakeServerData });
-    }, 5000);
+    }, 1000);
+    // setTimeout(() => {
+    //   this.setState({ filterString: "" });
+    // }, 2000);
   }
 
   render() {
+    console.log("this:", this);
+    console.log(this.state.serverData);
+    let playlistToRender = this.state.serverData.user
+      ? this.state.serverData.user.playlists.filter(playlist =>
+          playlist.name
+            .toLowerCase()
+            .includes(this.state.filterString.toLowerCase())
+        )
+      : [];
     return (
       <div className="App">
         {this.state.serverData.user ? (
@@ -120,14 +133,15 @@ class App extends Component {
               {this.state.serverData.user.name}
               Playlists
             </h1>
-            <PlaylistsCounter
-              playlists={this.state.serverData.user.playlists}
+            <PlaylistsCounter playlists={playlistToRender} />
+
+            <HoursCounter playlists={playlistToRender} />
+
+            <Filter
+              onTextChange={text => this.setState({ filterString: text })}
             />
-            <HoursCounter playlists={this.state.serverData.user.playlists} />
-            <Filter />
-            <Playlist />
-            <Playlist />
-            <Playlist />
+
+            {playlistToRender.map(playlist => <Playlist playlist={playlist} />)}
           </div>
         ) : (
           <h1>Loading....</h1>
