@@ -1,6 +1,6 @@
 import React, { Component } from "react";
-import logo from "./logo.svg";
 import "./App.css";
+import queryString from "query-string";
 
 let defaultStyle = {
   color: "#fff"
@@ -16,24 +16,6 @@ let fakeServerData = {
           { name: "Wish you were here", duration: 2342 },
           { name: "The less I know the better", duration: 4722 },
           { name: "Reckoner", duration: 3922 }
-        ]
-      },
-      {
-        name: "New Music",
-        songs: [
-          { name: "Kerala", duration: 1334 },
-          { name: "Gosh", duration: 2652 },
-          { name: "Juicebox", duration: 4232 },
-          { name: "Roitvan", duration: 3122 }
-        ]
-      },
-      {
-        name: "Alternative",
-        songs: [
-          { name: "You only live once", duration: 2334 },
-          { name: "Californication", duration: 3245 },
-          { name: "Cirrus", duration: 4722 },
-          { name: "Break Apart", duration: 3922 }
         ]
       }
     ]
@@ -76,7 +58,7 @@ class Filter extends Component {
       <div>
         <img />
         <input
-          typle="text"
+          type="text"
           onKeyUp={event => this.props.onTextChange(event.target.value)}
         />
         Filter
@@ -107,9 +89,19 @@ class App extends Component {
   }
 
   componentDidMount() {
-    setTimeout(() => {
-      this.setState({ serverData: fakeServerData });
-    }, 1000);
+    let parsed = queryString.parse(window.location.search);
+    let accessToken = parsed.access_token;
+
+    fetch("https://api.spotify.com/v1/me", {
+      headers: { Authorization: "Bearer " + accessToken }
+    })
+      .then(response => response.json())
+      .then(data => this.setState({ serverData: { user: { name: data.id } } }));
+
+    console.log(parsed);
+    // setTimeout(() => {
+    //   this.setState({ serverData: fakeServerData });
+    // }, 1000);
     // setTimeout(() => {
     //   this.setState({ filterString: "" });
     // }, 2000);
@@ -118,33 +110,45 @@ class App extends Component {
   render() {
     console.log("this:", this);
     console.log(this.state.serverData);
-    let playlistToRender = this.state.serverData.user
-      ? this.state.serverData.user.playlists.filter(playlist =>
-          playlist.name
-            .toLowerCase()
-            .includes(this.state.filterString.toLowerCase())
-        )
-      : [];
+
+    let playlistToRender =
+      this.state.serverData.user && this.state.serverData.user.playlists
+        ? this.state.serverData.user.playlists.filter(playlist =>
+            playlist.name
+              .toLowerCase()
+              .includes(this.state.filterString.toLowerCase())
+          )
+        : [];
+
     return (
       <div className="App">
-        {this.state.serverData.user ? (
+        {this.state.serverData.user && this.state.serverData.user.name ? (
           <div>
-            <h1>
-              {this.state.serverData.user.name}
-              Playlists
-            </h1>
-            <PlaylistsCounter playlists={playlistToRender} />
-
-            <HoursCounter playlists={playlistToRender} />
-
-            <Filter
-              onTextChange={text => this.setState({ filterString: text })}
-            />
-
-            {playlistToRender.map(playlist => <Playlist playlist={playlist} />)}
+            <h3>
+              {this.state.serverData.user.name} Playlists
+              <br />
+              <PlaylistsCounter playlists={playlistToRender} />
+              <HoursCounter playlists={playlistToRender} />
+              <Filter
+                onTextChange={text => this.setState({ filterString: text })}
+              />
+              {playlistToRender.map(playlist => (
+                <Playlist playlist={playlist} />
+              ))}
+            </h3>
           </div>
         ) : (
-          <h1>Loading....</h1>
+          <button
+            onClick={() => (window.location = "http://localhost:8888/login")}
+            style={{
+              padding: "20px",
+              fontSize: "50px",
+              marginTop: "20px",
+              backgroundColor: "lightgray"
+            }}
+          >
+            Sign in with Spotify
+          </button>
         )}
       </div>
     );
