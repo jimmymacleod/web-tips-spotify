@@ -151,9 +151,9 @@ class App extends Component {
         ) : (
           <button
             onClick={() => {
-              window.location = window.location.includes("localhost")
+              window.location = window.location.href.includes("localhost")
                 ? "http://localhost:8888/login"
-                : "https://web-tips-spotity,herokuapp.com/login";
+                : "https://web-tips-spotify-backend.herokuapp.com/login";
             }}
             style={{
               padding: "20px",
