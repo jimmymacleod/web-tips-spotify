@@ -69,9 +69,10 @@ class Filter extends Component {
 
 class Playlist extends Component {
   render() {
+    let playlist = this.props.playlist;
     return (
       <div style={{ width: "30%", display: "inline-block" }}>
-        <img />
+        <img src={playlist.imageUrl} style={{ width: "160px" }} />
         <h3>{this.props.playlist.name}</h3>
         <ul>{this.props.playlist.songs.map(song => <li>{song.name}</li>)}</ul>
       </div>
@@ -96,15 +97,24 @@ class App extends Component {
       headers: { Authorization: "Bearer " + accessToken }
     })
       .then(response => response.json())
-      .then(data => this.setState({ serverData: { user: { name: data.id } } }));
+      .then(data => this.setState({ user: { name: data.id } }));
 
-    console.log(parsed);
-    // setTimeout(() => {
-    //   this.setState({ serverData: fakeServerData });
-    // }, 1000);
-    // setTimeout(() => {
-    //   this.setState({ filterString: "" });
-    // }, 2000);
+    fetch("https://api.spotify.com/v1/me/playlists", {
+      headers: { Authorization: "Bearer " + accessToken }
+    })
+      .then(response => response.json())
+      .then(data =>
+        this.setState({
+          playlists: data.items.map(item => {
+            console.log();
+            return {
+              name: item.name,
+              imageUrl: item.images[0].url,
+              songs: []
+            };
+          })
+        })
+      );
   }
 
   render() {
@@ -112,8 +122,8 @@ class App extends Component {
     console.log(this.state.serverData);
 
     let playlistToRender =
-      this.state.serverData.user && this.state.serverData.user.playlists
-        ? this.state.serverData.user.playlists.filter(playlist =>
+      this.state.user && this.state.playlists
+        ? this.state.playlists.filter(playlist =>
             playlist.name
               .toLowerCase()
               .includes(this.state.filterString.toLowerCase())
@@ -122,10 +132,10 @@ class App extends Component {
 
     return (
       <div className="App">
-        {this.state.serverData.user && this.state.serverData.user.name ? (
+        {this.state.user && this.state.user.name ? (
           <div>
             <h3>
-              {this.state.serverData.user.name} Playlists
+              {this.state.user.name} Playlists
               <br />
               <PlaylistsCounter playlists={playlistToRender} />
               <HoursCounter playlists={playlistToRender} />
